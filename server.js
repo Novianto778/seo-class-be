@@ -8,6 +8,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
 app.get("/api/news/:id", async (req, res) => {
   console.log("GET /api/news/:id");
 
