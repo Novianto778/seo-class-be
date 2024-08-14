@@ -105,10 +105,10 @@ app.post("/api/events", async (req, res) => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // get data from database
-    const query = supabase.from("news").select("*");
+    const query = supabase.from("events").select("*");
 
     if (date_from && date_to) {
-      query.gte("date", date_from).lte("events", date_to);
+      query.gte("date", date_from).lte("event", date_to);
     }
 
     if (search) {
@@ -145,7 +145,7 @@ app.post("/api/events", async (req, res) => {
 app.get("/api/events/:id", async (req, res) => {
   const id = req.params.id;
 
-  const query = supabase.from("events").select("*").eq("id", id);
+  const query = supabase.from("event").select("*").eq("id", id);
 
   const { data, error } = await query;
 
