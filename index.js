@@ -52,7 +52,9 @@ app.post("/api/news", async (req, res) => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // get data from database
-    const query = supabase.from("news").select("*");
+    const query = supabase.from("news").select("*", {
+      count: "exact",
+    });
 
     if (date_from && date_to) {
       query.gte("publicationdate", date_from).lte("publicationdate", date_to);
@@ -64,22 +66,22 @@ app.post("/api/news", async (req, res) => {
 
     query.range(offset, offset + limit - 1);
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       return res.status(400).json({ error: error.message });
     }
 
-    const total = (
-      await supabase.from("news").select("id", { count: "exact", head: true })
-    ).count;
+    // const total = (
+    //   await supabase.from("news").select("id", { count: "exact", head: true })
+    // ).count;
 
     const responseData = {
       data: data,
       pagination: {
         page,
         perPage: limit,
-        total: total,
+        total: count,
       },
     };
 
@@ -124,7 +126,7 @@ app.post("/api/events", async (req, res) => {
     }
 
     const total = (
-      await supabase.from("news").select("id", { count: "exact", head: true })
+      await supabase.from("event").select("id", { count: "exact", head: true })
     ).count;
 
     const responseData = {
