@@ -1,6 +1,8 @@
 import express from "express";
 import supabase from "./supabase.js";
 import cors from "cors";
+import jwt from "jsonwebtoken";
+import * as jose from "jose";
 
 const app = express();
 const PORT = 4000;
@@ -17,11 +19,33 @@ app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
 
   if (email === "admin@gmail.com" && password === "admin") {
-    return res.status(200).json({ message: "Login successful" });
+    const token = jwt.sign({ email }, "secret", { expiresIn: "1h" });
+    return res.status(200).json({ token });
   }
 
-  return res.status(400).json({ error: "Invalid email or password" });
+  return res.status(401).json({ error: "Invalid credentials" });
 });
+
+// auth middleware
+const auth = async (req, res, next) => {
+  const bearerToken = req.headers.authorization;
+
+  const token = bearerToken?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, "secret");
+
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+};
+
+app.use(auth);
 
 app.get("/api/news/:id", async (req, res) => {
   console.log("GET /api/news/:id");
