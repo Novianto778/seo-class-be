@@ -3,12 +3,33 @@ import supabase from "./supabase.js";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import * as jose from "jose";
+import multer from "multer";
 
 const app = express();
 const PORT = 4000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
+
+app.post("/api/upload", upload.single("file"), async (req, res) => {
+  console.log("req.file", req.file);
+  // set headers location
+  res.setHeader("Location", `http://localhost:4000/123123`);
+  res.status(201).json({ message: "File uploaded" });
+
+  return res.end();
+});
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -19,11 +40,12 @@ app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
 
   if (email === "admin@gmail.com" && password === "admin") {
-    const token = jwt.sign({ email }, "secret", { expiresIn: "1h" });
-    return res.status(200).json({ token });
+    // 1 min
+    const token = jwt.sign({ email }, "secret", { expiresIn: "10m" });
+    return res.status(200).json({ token, email });
   }
 
-  return res.status(401).json({ error: "Invalid credentials" });
+  return res.status(401).json({ message: "Invalid credentials" });
 });
 
 // auth middleware
@@ -31,8 +53,9 @@ const auth = async (req, res, next) => {
   const bearerToken = req.headers.authorization;
 
   const token = bearerToken?.split(" ")[1];
+
   if (!token) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   try {
@@ -41,9 +64,33 @@ const auth = async (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 };
+// refresh token
+
+app.post("/api/refresh", async (req, res) => {
+  const bearerToken = req.headers.authorization;
+
+  const token = bearerToken?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const decoded = {
+      email: "admin@gmail.com",
+    };
+
+    const newToken = jwt.sign({ email: decoded.email }, "secret", {
+      expiresIn: "1m",
+    });
+
+    return res.status(200).json({ token: newToken });
+  } catch (error) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+});
 
 app.use(auth);
 
