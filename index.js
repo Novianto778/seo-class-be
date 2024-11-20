@@ -92,7 +92,7 @@ app.post("/api/refresh", async (req, res) => {
   }
 });
 
-app.use(auth);
+// app.use(auth);
 
 app.get("/api/news/:id", async (req, res) => {
   console.log("GET /api/news/:id");
